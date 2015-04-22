@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>console</headerType>
+  <jar>D:\prj\UDS-server\target\scala-2.11\UDS-server-0.1.0-SNAPSHOT-monolith.jar</jar>
+  <outfile>D:\prj\UDS-server\exe\udssrv.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <manifest></manifest>
+  <icon></icon>
+  <jre>
+    <path></path>
+    <bundledJre64Bit>false</bundledJre64Bit>
+    <minVersion>1.8.0</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+    <initialHeapSize>256</initialHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
+    <opt>-XX:+ShowMessageBoxOnError</opt>
+    <opt>-XX:+HeapDumpOnOutOfMemoryError</opt>
+  </jre>
+</launch4jConfig>

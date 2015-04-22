@@ -1,0 +1,1 @@
+F:\l4j\launch4jc.exe l4j.cfg.xml
