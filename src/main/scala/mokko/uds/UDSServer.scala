@@ -7,12 +7,14 @@
 package mokko.uds
 
 import akka.actor.ActorSystem
+import akka.io.IO
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.core.util.StatusPrinter
 import com.typesafe.config.ConfigFactory
 import java.io.File
 import org.slf4j.LoggerFactory
 import scala.io.StdIn
+import spray.can.Http
 
 object UDSServer extends App {
 
@@ -36,6 +38,9 @@ object UDSServer extends App {
 
   log.info(s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}")
 
+  val webService = akkaSystem.actorOf(WebServiceActor.props, "uds-server")
+  IO(Http)(akkaSystem) ! Http.Bind(webService, host, port = port)
+  
   StdIn.readLine
   akkaSystem.shutdown
   
