@@ -40,3 +40,7 @@ object UDSServer extends App {
   akkaSystem.shutdown
   
 }
+
+trait AppLogging {
+  val log = UDSServer.log
+}
