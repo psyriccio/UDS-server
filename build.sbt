@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.1.2",
   "com.google.guava" % "guava" % "18.0",
   "io.spray" % "spray-can_2.11" % "1.3.2",
-  "io.spray" % "spray-routing_2.11" % "1.3.2"
+  "io.spray" % "spray-routing_2.11" % "1.3.2",
+  "org.jodd" % "jodd-core" % "3.6.5"
 )
 
 packSettings
@@ -77,3 +78,5 @@ reflect	<<= (sbt.Keys.sourceManaged, sbt.Keys.name, sbt.Keys.version, reflectPac
 sourceGenerators in Compile <+= reflect map identity
 
 unmanagedClasspath in Runtime <+= (baseDirectory) map { bd => Attributed.blank(bd / "res") }
+
+unmanagedJars in Compile += file("../UDS-lib/dist/UDS-lib.jar")
