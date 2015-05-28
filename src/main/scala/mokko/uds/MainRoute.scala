@@ -77,7 +77,7 @@ trait MainRoute extends Directives with AppLogging {
       get {
         log.info(s"GET ${requestUri.toString}")
         val plugin = UDSServer.plugins.get(pathRest.split("/")(0))
-        val result = if(plugin == null) new ServerResponce("") else plugin.get(pathRest)
+        val result = if(plugin == null) new ServerResponce("") else plugin.get(pathRest.replaceFirst(pathRest.split("/")(0), ""))
         respondWithMediaType(MediaType.custom(result.getMediaType)) {
           complete {
             result.getData()
