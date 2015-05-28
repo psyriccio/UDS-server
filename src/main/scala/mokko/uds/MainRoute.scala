@@ -80,7 +80,7 @@ trait MainRoute extends Directives with AppLogging {
         for(name: Object <- UDSServer.plugins.keySet.toArray) {
           val plugin = UDSServer.plugins.get(name)
           if(pathRest.startsWith(name.asInstanceOf[String])) {
-            result = if(plugin == null) new ServerResponce(StatusCode.NotFound, "404") else plugin.get(pathRest)
+            result = if(plugin == null) new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404") else plugin.get(pathRest)
           }
         }
         val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
