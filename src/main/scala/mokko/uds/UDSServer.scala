@@ -44,19 +44,35 @@ object UDSServer extends App with IServer {
   
   val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap();
   
-  val pluginsConf = conf.getObject("uds-server.tree")
-  for(key: Object <- pluginsConf.keySet.stream.sorted.toArray) {
-    val pluginPath = conf.getString(s"uds-server.tree.${key}")
-    log.info(s"Loading plugin ${key} from path ${pluginPath}")
-    val pluginPathParts = pluginPath.split("/")
-    log.info(s"${pluginPathParts(0)} : ${pluginPathParts(1)}")
-    val url = (new File(pluginsDir, pluginPathParts(0))).toURI.toURL
-    val classLoader = new URLClassLoader(Array(url))
-    val pluginClass = classLoader.loadClass(pluginPathParts(1))
-    val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
-    plugins.put(key.toString, plugin)
-    plugin.init(this)
-    log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
+  val treeConf = conf.getObject("uds-server.tree")
+  for(key: Object <- treeConf.keySet.stream.sorted.toArray) {
+    val entryType = key.asInstanceOf[String].split(":")(0)
+    val entryVal = key.asInstanceOf[String].split(":")(1)
+    var processed = false
+    if(entryType.compareToIgnoreCase("plugin") == 0) {
+      val pluginPath = conf.getString(s"uds-server.tree.${entryVal}")
+      log.info(s"Loading plugin ${entryVal} from path ${pluginPath}")
+      val pluginPathParts = pluginPath.split("/")
+      log.info(s"${pluginPathParts(0)} : ${pluginPathParts(1)}")
+      val url = (new File(pluginsDir, pluginPathParts(0))).toURI.toURL
+      val classLoader = new URLClassLoader(Array(url))
+      val pluginClass = classLoader.loadClass(pluginPathParts(1))
+      val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
+      plugins.put(entryVal, plugin)
+      plugin.init(this)
+      log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
+      processed = true
+    }
+    if(entryType.compareToIgnoreCase("config") == 0) {
+      log.info(s"Loading internal plugin (Config) ${entryVal}")
+      val plugin = new mokko.uds.plugins.internal.Config()
+      plugins.put(entryVal, plugin)
+      log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
+      processed = true
+    }
+    if(!processed) {
+      log.error("Error processing tree entry " + key.asInstanceOf[String] + " ; skipped!")
+    }
   }
     
   val host = if(args.length < 1) conf.getString("uds-server.host") else args(0)
