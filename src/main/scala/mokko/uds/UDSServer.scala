@@ -10,19 +10,24 @@ import akka.actor.ActorSystem
 import akka.io.IO
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.core.util.StatusPrinter
-import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import com.typesafe.config.ConfigObject
 import java.io.File
-import java.net.URL
 import java.net.URLClassLoader
 import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
 import scala.io.StdIn
 import spray.can.Http
 
-object UDSServer extends App {
+object UDSServer extends App with IServer {
 
+  def getHelo() = {
+    s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}"
+  }
+  
+  def getVersion = {
+    s"${buildinfo.buildInfo.version}"
+  }
+  
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
   StatusPrinter.print(lc);
   
@@ -50,7 +55,7 @@ object UDSServer extends App {
     val pluginClass = classLoader.loadClass(pluginPathParts(1))
     val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
     plugins.put(key.toString, plugin)
-    plugin.init()
+    plugin.init(this)
     log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
   }
     
