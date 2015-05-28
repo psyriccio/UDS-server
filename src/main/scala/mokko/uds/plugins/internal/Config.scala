@@ -10,10 +10,20 @@ import mokko.uds._
 
 class Config extends IServerPlugin {
 
+  var server: IServer
+  
   def getName() = { "Config" }
   
-  def getDescription = { "Config, internal plugin" }
+  def getDescription() = { "Config, internal plugin" }
  
+  def init(srv: IServer) = {
+    server = srv
+  }
+  
+  def done(srv: IServer) = {
+    //
+  }
+  
   def get(uri: String) = {
     new ServerResponce(StatusCode.NotImplemented, "Not implemented")
   }
