@@ -25,11 +25,11 @@ class Config extends IServerPlugin {
   }
   
   def get(uri: String) = {
-    new ServerResponce(StatusCode.NotImplemented, "Not implemented")
+    new ServerResponce(StatusCode.NotImplemented, s"Not implemented (${uri})")
   }
   
   def post(uri: String) = {
-    new ServerResponce(StatusCode.NotImplemented, "Not implemented")
+    new ServerResponce(StatusCode.NotImplemented, s"Not implemented (${uri})")
   }
   
 }
