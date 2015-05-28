@@ -10,7 +10,7 @@ import mokko.uds._
 
 class Config extends IServerPlugin {
 
-  var server: IServer
+  var server: IServer = null
   
   def getName() = { "Config" }
   
