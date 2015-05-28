@@ -76,7 +76,7 @@ trait MainRoute extends Directives with AppLogging {
     path(Rest) { pathRest =>
       get {
         log.info(s"GET ${requestUri.toString}")
-        var result = new ServerResponce(StatusCode.NotFound, "404")
+        var result = new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404")
         for(name: Object <- UDSServer.plugins.keySet.toArray) {
           val plugin = UDSServer.plugins.get(name)
           if(pathRest.startsWith(name.asInstanceOf[String])) {
