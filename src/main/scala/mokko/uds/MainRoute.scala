@@ -77,10 +77,13 @@ trait MainRoute extends Directives with AppLogging {
       get {
         log.info(s"GET ${requestUri.toString}")
         val plugin = UDSServer.plugins.get(pathRest.split("/")(0))
-        val result = if(plugin == null) new ServerResponce("") else plugin.get(pathRest.replaceFirst(pathRest.split("/")(0), ""))
+        val result = if(plugin == null) new ServerResponce(StatusCode.NotFound, "404") else plugin.get(pathRest.replaceFirst(pathRest.split("/")(0), ""))
+        val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
         respondWithMediaType(MediaType.custom(result.getMediaType)) {
-          complete {
-            result.getData()
+          respondWithStatus(if(statusCode != null) statusCode else StatusCodes.InternalServerError) {
+            complete {
+              result.getData()
+            }
           }
         }
       } 
