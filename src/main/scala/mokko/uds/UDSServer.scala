@@ -74,6 +74,7 @@ object UDSServer extends App with IServer {
   val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Message]] = new ConcurrentHashMap()
   val pluginsSessionKeys: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
   val sessions: ConcurrentHashMap[String, ConcurrentHashMap[String, Object]] = new ConcurrentHashMap[String, ConcurrentHashMap[String, Object]]
+  val clientSessions: ConcurrentHashMap[String, ClientSession] = new ConcurrentHashMap[String, ClientSession]()
   
   val treeConf = conf.getObject("uds-server.tree")
   for(key: Object <- treeConf.keySet.stream.sorted.toArray) {
