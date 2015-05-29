@@ -9,6 +9,8 @@ package mokko.uds
 import com.google.common.io.Files
 import java.io.File
 import spray.http._
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext
 import spray.http.MediaTypes._
 import spray.routing._
@@ -75,8 +77,13 @@ trait MainRoute extends Directives with AppLogging {
   
     path(Rest) { pathRest =>
       get {
-        headerValueByName("Session-Key") { sessionKey =>
-          val clientSession = UDSServer.clientSessions.get(sessionKey)
+        headerValueByName("Session-Key") { sessionKeyHeader =>
+          val sessionKey = if(sessionKeyHeader.isEmpty || sessionKeyHeader == null) UUID.randomUUID.toString() else sessionKeyHeader
+          
+          val clientSession = 
+            if(UDSServer.clientSessions.contains(sessionKey)) 
+              UDSServer.clientSessions.get(sessionKey) else UDSServer.clientSessions.put(sessionKey, new ClientSession(sessionKey))
+          
           log.info(s"GET ${requestUri.toString}")
           var result = new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404")
           for(name: Object <- UDSServer.plugins.keySet.toArray) {
