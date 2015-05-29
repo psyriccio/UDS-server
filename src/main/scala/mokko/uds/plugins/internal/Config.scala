@@ -11,13 +11,15 @@ import mokko.uds._
 class Config extends IServerPlugin {
 
   var server: IServer = null
+  var sessionKey: String = null
   
   def getName() = { "Config" }
   
   def getDescription() = { "Config, internal plugin" }
  
-  def init(srv: IServer) = {
+  def init(srv: IServer, sessKey: String) = {
     server = srv
+    sessionKey = sessKey
   }
   
   def done(srv: IServer) = {
