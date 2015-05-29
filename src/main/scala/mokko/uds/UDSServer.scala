@@ -13,7 +13,9 @@ import ch.qos.logback.core.util.StatusPrinter
 import com.typesafe.config.ConfigFactory
 import java.io.File
 import java.net.URLClassLoader
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
 import org.slf4j.LoggerFactory
 import scala.io.StdIn
 import spray.can.Http
@@ -42,7 +44,9 @@ object UDSServer extends App with IServer {
 
   val pluginsDir = new File(conf.getString("uds-server.pluginsPath"))
   
-  val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap();
+  val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap[String, IServerPlugin]()
+  val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Object]] = new ConcurrentHashMap()
+  val pluginsSessionKeys: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
   
   val treeConf = conf.getObject("uds-server.tree")
   for(key: Object <- treeConf.keySet.stream.sorted.toArray) {
@@ -59,6 +63,9 @@ object UDSServer extends App with IServer {
       val pluginClass = classLoader.loadClass(pluginPathParts(1))
       val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
       plugins.put(key.asInstanceOf[String], plugin)
+      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Object]())
+      val sessionKey = UUID.randomUUID.toString
+      pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
       plugin.init(this)
       log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
       processed = true
@@ -67,6 +74,9 @@ object UDSServer extends App with IServer {
       log.info(s"Loading internal plugin (Config) ${key}")
       val plugin = new mokko.uds.plugins.internal.Config()
       plugins.put(key.asInstanceOf[String], plugin)
+      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Object]())
+      val sessionKey = UUID.randomUUID.toString
+      pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
       log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
       processed = true
     }
