@@ -73,6 +73,7 @@ object UDSServer extends App with IServer {
   val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap[String, IServerPlugin]()
   val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Message]] = new ConcurrentHashMap()
   val pluginsSessionKeys: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
+  val sessions: ConcurrentHashMap[String, ConcurrentHashMap[String, Object]] = new ConcurrentHashMap[String, ConcurrentHashMap[String, Object]]
   
   val treeConf = conf.getObject("uds-server.tree")
   for(key: Object <- treeConf.keySet.stream.sorted.toArray) {
@@ -92,6 +93,7 @@ object UDSServer extends App with IServer {
       pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Message]())
       val sessionKey = UUID.randomUUID.toString
       pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
+      sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
       plugin.init(this, sessionKey)
       log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
       processed = true
@@ -103,6 +105,7 @@ object UDSServer extends App with IServer {
       pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Message]())
       val sessionKey = UUID.randomUUID.toString
       pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
+      sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
       log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
       plugin.init(this, sessionKey)
       processed = true
