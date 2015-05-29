@@ -30,6 +30,32 @@ object UDSServer extends App with IServer {
     s"${buildinfo.buildInfo.version}"
   }
   
+  def resolvePluginName(sessionKey: String): String = {
+    pluginsSessionKeys.get(sessionKey)
+  }
+  
+  def isMessageAvailable(sessionKey: String): Boolean = {
+    !pluginsMessageQueues.get(resolvePluginName(sessionKey)).isEmpty
+  }
+  
+  def popMessage(sessionKey: String): Message = {
+    pluginsMessageQueues.get(resolvePluginName(sessionKey)).poll
+  }
+  
+  def popAllMessages(sessionKey: String): Array[Message] = {
+    val result = pluginsMessageQueues.get(resolvePluginName(sessionKey)).toArray[Message](new Array[Message](0))
+    pluginsMessageQueues.get(resolvePluginName(sessionKey)).clear()
+    result
+  }
+  
+  def sendMessage(sessionKey: String, message: Message) = {
+    if(!message.getSender().isEmpty) {
+      if(message.getSender() == resolvePluginName(sessionKey)) {
+        pluginsMessageQueues.get(message.getRecipient()).put(message)
+      }
+    }
+  }
+  
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
   StatusPrinter.print(lc);
   
@@ -45,7 +71,7 @@ object UDSServer extends App with IServer {
   val pluginsDir = new File(conf.getString("uds-server.pluginsPath"))
   
   val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap[String, IServerPlugin]()
-  val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Object]] = new ConcurrentHashMap()
+  val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Message]] = new ConcurrentHashMap()
   val pluginsSessionKeys: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
   
   val treeConf = conf.getObject("uds-server.tree")
@@ -63,10 +89,10 @@ object UDSServer extends App with IServer {
       val pluginClass = classLoader.loadClass(pluginPathParts(1))
       val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
       plugins.put(key.asInstanceOf[String], plugin)
-      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Object]())
+      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Message]())
       val sessionKey = UUID.randomUUID.toString
       pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
-      plugin.init(this)
+      plugin.init(this, sessionKey)
       log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
       processed = true
     }
@@ -74,10 +100,11 @@ object UDSServer extends App with IServer {
       log.info(s"Loading internal plugin (Config) ${key}")
       val plugin = new mokko.uds.plugins.internal.Config()
       plugins.put(key.asInstanceOf[String], plugin)
-      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Object]())
+      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Message]())
       val sessionKey = UUID.randomUUID.toString
       pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
       log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
+      plugin.init(this, sessionKey)
       processed = true
     }
     if(!processed) {
