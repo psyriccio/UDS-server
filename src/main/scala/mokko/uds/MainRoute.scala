@@ -12,6 +12,7 @@ import spray.http._
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext
+import spray.http.HttpHeaders.RawHeader
 import spray.http.MediaTypes._
 import spray.routing._
 
@@ -95,8 +96,10 @@ trait MainRoute extends Directives with AppLogging {
           val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
           respondWithMediaType(MediaType.custom(result.getMediaType)) {
             respondWithStatus(if(statusCode != null) statusCode else StatusCodes.InternalServerError) {
-              complete {
-                result.getData()
+              respondWithHeader(RawHeader("Session-Key", sessionKey)) {
+                complete {
+                  result.getData()
+                }
               }
             }
           }
