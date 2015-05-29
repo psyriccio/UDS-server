@@ -10,7 +10,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 class ClientSession(val sessionKey: String) extends ISession {
 
-  val thisSession: ConcurrentHashMap[String, Object] = UDSServer.sessions.get(sessionKey)
+  val thisSession: ConcurrentHashMap[String, Object] = 
+    if(UDSServer.sessions.contains(sessionKey)) 
+      UDSServer.sessions.get(sessionKey) else UDSServer.sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
   
   def getId(): String = {
     sessionKey
