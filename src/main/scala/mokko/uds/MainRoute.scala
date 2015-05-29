@@ -75,25 +75,27 @@ trait MainRoute extends Directives with AppLogging {
   
     path(Rest) { pathRest =>
       get {
-        log.info(s"GET ${requestUri.toString}")
-        var result = new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404")
-        for(name: Object <- UDSServer.plugins.keySet.toArray) {
-          val plugin = UDSServer.plugins.get(name)
-          if(pathRest.startsWith(name.asInstanceOf[String])) {
-            result = if(plugin == null) new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404") else plugin.get(pathRest)
-          }
-        }
-        val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
-        respondWithMediaType(MediaType.custom(result.getMediaType)) {
-          respondWithStatus(if(statusCode != null) statusCode else StatusCodes.InternalServerError) {
-            complete {
-              result.getData()
+        headerValueByName("Session-Key") { sessionKey =>
+          val clientSession = UDSServer.clientSessions.get(sessionKey)
+          log.info(s"GET ${requestUri.toString}")
+          var result = new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404")
+          for(name: Object <- UDSServer.plugins.keySet.toArray) {
+            val plugin = UDSServer.plugins.get(name)
+            if(pathRest.startsWith(name.asInstanceOf[String])) {
+              result = if(plugin == null) new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404") else plugin.get(pathRest, clientSession)
             }
           }
-        }
-  } 
+          val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
+          respondWithMediaType(MediaType.custom(result.getMediaType)) {
+            respondWithStatus(if(statusCode != null) statusCode else StatusCodes.InternalServerError) {
+              complete {
+                result.getData()
+              }
+            }
+          }
+        } 
+      }
     }
-    
   }
   
 }
