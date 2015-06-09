@@ -78,9 +78,8 @@ trait MainRoute extends Directives with AppLogging {
   
     path(Rest) { pathRest =>
       get {
-        headerValueByName("Session-Key") { sessionKeyHeader =>
-          val sessionKey = if(sessionKeyHeader.isEmpty || sessionKeyHeader == null) UUID.randomUUID.toString() else sessionKeyHeader
-          
+        optionalHeaderValueByName("Session-Key") { sessionKeyHeader =>
+          val sessionKey = if(sessionKeyHeader.orElse(Option("")).isEmpty || sessionKeyHeader == null) UUID.randomUUID.toString() else sessionKeyHeader.orNull
           val clientSession = 
             if(UDSServer.clientSessions.contains(sessionKey)) 
               UDSServer.clientSessions.get(sessionKey) else UDSServer.clientSessions.put(sessionKey, new ClientSession(sessionKey))
