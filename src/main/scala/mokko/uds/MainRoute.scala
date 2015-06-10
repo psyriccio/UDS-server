@@ -90,7 +90,7 @@ trait MainRoute extends Directives with AppLogging {
           for(name: Object <- UDSServer.plugins.keySet.toArray) {
             val plugin = UDSServer.plugins.get(name)
             if(pathRest.startsWith(name.asInstanceOf[String])) {
-              result = if(plugin == null) new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404") else plugin.get(pathRest.replaceFirst(name.asInstanceOf[String], ""), clientSession)
+              result = if(plugin == null) new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404") else plugin.get(pathRest.replaceFirst(name.asInstanceOf[String], ""), clientSession, null)
             }
           }
           val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
@@ -99,6 +99,42 @@ trait MainRoute extends Directives with AppLogging {
               respondWithHeader(RawHeader("Session-Key", sessionKey)) {
                 complete {
                   result.getData()
+                }
+              }
+            }
+          }
+        } 
+      } ~
+      post {
+        optionalHeaderValueByName("Session-Key") { sessionKeyHeader =>
+          entity(as[MultipartFormData]) { formData =>
+            log.info(s"Header> Session-Key:${sessionKeyHeader}")
+            val sessionKey = if(sessionKeyHeader.orElse(None) == None || sessionKeyHeader == null) UUID.randomUUID.toString() else sessionKeyHeader.orNull
+            log.info(s"sessionKey=${sessionKey}")
+            val clientSession = 
+              if(UDSServer.clientSessions.contains(sessionKey)) 
+                UDSServer.clientSessions.get(sessionKey) else UDSServer.clientSessions.put(sessionKey, new ClientSession(sessionKey))
+            
+            log.info(s"POST ${requestUri.toString}")
+            var result = new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404")
+            var data: Array[Byte] = null
+            val details = formData.fields.map {
+              case (BodyPart(entity, headers)) =>
+                data = entity.data.toByteArray
+            }
+            for(name: Object <- UDSServer.plugins.keySet.toArray) {
+              val plugin = UDSServer.plugins.get(name)
+              if(pathRest.startsWith(name.asInstanceOf[String])) {
+                result = if(plugin == null) new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404") else plugin.post(pathRest.replaceFirst(name.asInstanceOf[String], ""), clientSession, data)
+              }
+            }
+            val statusCode = StatusCodes.getForKey(result.getStatusCode).orNull
+            respondWithMediaType(MediaType.custom(result.getMediaType)) {
+              respondWithStatus(if(statusCode != null) statusCode else StatusCodes.InternalServerError) {
+                respondWithHeader(RawHeader("Session-Key", sessionKey)) {
+                  complete {
+                    result.getData()
+                  }
                 }
               }
             }
