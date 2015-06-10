@@ -10,7 +10,6 @@ import com.google.common.io.Files
 import java.io.File
 import spray.http._
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext
 import spray.http.HttpHeaders.RawHeader
 import spray.http.MediaTypes._
