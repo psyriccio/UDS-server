@@ -26,11 +26,11 @@ class Config extends IServerPlugin {
     //
   }
   
-  def get(uri: String, session: ISession) = {
+  def get(uri: String, session: ISession, content: Array[Byte]) = {
     new ServerResponce(StatusCode.NotImplemented, s"Not implemented (${uri})")
   }
   
-  def post(uri: String, session: ISession) = {
+  def post(uri: String, session: ISession, content: Array[Byte]) = {
     new ServerResponce(StatusCode.NotImplemented, s"Not implemented (${uri})")
   }
   
