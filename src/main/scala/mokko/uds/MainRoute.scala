@@ -107,7 +107,7 @@ trait MainRoute extends Directives with AppLogging {
       } ~
       post {
         optionalHeaderValueByName("Session-Key") { sessionKeyHeader =>
-          entity(as[MultipartFormData]) { formData =>
+          entity(as[String]) { formData =>
             log.info(s"Header> Session-Key:${sessionKeyHeader}")
             val sessionKey = if(sessionKeyHeader.orElse(None) == None || sessionKeyHeader == null) UUID.randomUUID.toString() else sessionKeyHeader.orNull
             log.info(s"sessionKey=${sessionKey}")
@@ -117,11 +117,7 @@ trait MainRoute extends Directives with AppLogging {
             
             log.info(s"POST ${requestUri.toString}")
             var result = new ServerResponce(StatusCode.NotFound, s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}\n404")
-            var data: Array[Byte] = null
-            val details = formData.fields.map {
-              case (BodyPart(entity, headers)) =>
-                data = entity.data.toByteArray
-            }
+            var data: Array[Byte] = formData.getBytes("UTF-8")
             for(name: Object <- UDSServer.plugins.keySet.toArray) {
               val plugin = UDSServer.plugins.get(name)
               if(pathRest.startsWith(name.asInstanceOf[String])) {
