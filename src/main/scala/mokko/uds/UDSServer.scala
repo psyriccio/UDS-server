@@ -56,6 +56,10 @@ object UDSServer extends App with IServer {
     }
   }
   
+  def log(msg: String) = {
+    log.info(msg)
+  }
+  
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
   StatusPrinter.print(lc);
   
