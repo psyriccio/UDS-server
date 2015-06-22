@@ -13,6 +13,7 @@ import ch.qos.logback.core.util.StatusPrinter
 import com.typesafe.config.ConfigFactory
 import java.io.File
 import java.net.URLClassLoader
+import java.util.ArrayList
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -20,7 +21,7 @@ import org.slf4j.LoggerFactory
 import scala.io.StdIn
 import spray.can.Http
 
-object UDSServer extends App with IServer {
+object UDSServer extends App with IServer with IServerManager {
 
   def getHelo() = {
     s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}"
@@ -58,6 +59,19 @@ object UDSServer extends App with IServer {
   
   def log(msg: String) = {
     log.info(msg)
+  }
+  
+  def getServerManager() = {
+    this
+  }
+  
+  def getPluginsDescriptors() = {
+    var plugs: ArrayList[IPluginDescriptor] = new ArrayList[IPluginDescriptor]
+    for(name: Object <- plugins.keySet.toArray) {
+      val plugin = UDSServer.plugins.get(name)
+      plugs.add(new PluginDescriptorImpl(plugin))
+    }
+    plugs
   }
   
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
@@ -138,4 +152,16 @@ object UDSServer extends App with IServer {
 
 trait AppLogging {
   val log = UDSServer.log
+}
+
+class PluginDescriptorImpl(serverPlugin: IServerPlugin) extends IPluginDescriptor {
+    
+  def getName() = {
+    serverPlugin.getName()
+  }
+  
+  def getDescription() = {
+    serverPlugin.getDescription()
+  }
+  
 }
