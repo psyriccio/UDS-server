@@ -164,4 +164,15 @@ class PluginDescriptorImpl(serverPlugin: IServerPlugin) extends IPluginDescripto
     serverPlugin.getDescription()
   }
   
+  def getURLPrefix() = {
+    var result = ""
+    for(name: Object <- UDSServer.plugins.keySet.toArray) {
+      val plugin = UDSServer.plugins.get(name)
+      if(plugin.equals(serverPlugin)) {
+        result = name.asInstanceOf[String]
+      }
+    }
+    result
+  }
+  
 }
