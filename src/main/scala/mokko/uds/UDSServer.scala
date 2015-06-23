@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 import scala.io.StdIn
 import spray.can.Http
 
-object UDSServer extends App with IServer with IServerManager {
+object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl with RuntimeMXBeanImpl {
 
   def getHelo() = {
     s"${buildinfo.buildInfo.name} ${buildinfo.buildInfo.version}"
