@@ -61,6 +61,10 @@ object UDSServer extends App with IServer with IServerManager {
     log.info(msg)
   }
   
+  def resolveName(id: String) = {
+    pluginsSessionKeys.get(id)
+  }
+  
   def getServerManager() = {
     this
   }
