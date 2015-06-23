@@ -50,9 +50,12 @@ object UDSServer extends App with IServer with IServerManager {
   }
   
   def sendMessage(sessionKey: String, message: Message) = {
+    log.info(s"sendMessage() sessionKey=${sessionKey}, from=${message.getSender()}, to=${message.getRecipient()}")
     if(!message.getSender().isEmpty) {
       if(message.getSender() == resolvePluginName(sessionKey)) {
         pluginsMessageQueues.get(message.getRecipient()).put(message)
+      } else {
+        log.info(s"Invalid session key, sender=${message.getSender()}, sessionKey=${sessionKey}");
       }
     }
   }
