@@ -94,7 +94,6 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
       val pluginClass = classLoader.loadClass(pluginPathParts(1))
       val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
       plugins.put(urlPrefix, plugin)
-      pluginsConfigs.put(urlPrefix, config)
       pluginsMessageQueues.put(urlPrefix, new LinkedBlockingQueue[Message]())
       val sessionKey = UUID.randomUUID.toString
       pluginsSessionKeys.put(sessionKey, urlPrefix)
@@ -114,6 +113,9 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
       log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
       plugin.init(this, sessionKey)
       processed = true
+    }
+    if(processed) {
+      pluginsConfigs.put(urlPrefix, config)
     }
     processed
   }
