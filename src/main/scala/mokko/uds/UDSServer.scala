@@ -148,7 +148,6 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
     val urlCopy: Array[Byte] = urlPrefix.getBytes("UTF-8").clone()
     log.info(s"reloading plugin at ${urlPrefix}")
     unloadPlugin(urlPrefix)
-    System.gc()
     val urlPrefixCopy = new String(urlCopy, "UTF-8")
     loadPlugin(urlPrefixCopy, pluginsConfigs.get(urlPrefixCopy))
   }
