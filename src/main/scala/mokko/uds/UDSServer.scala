@@ -127,13 +127,10 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
       log.info(s"plugin finded: ${plugin.getName()} - ${plugin.getDescription}")
       val classLoader = pluginsClassLoaders.get(urlPrefix).asInstanceOf[URLClassLoader]
       log.info(s"${classLoader.toString()} ${classLoader.getURLs.mkString}")
-      classLoader.close();
       pluginsClassLoaders.remove(urlPrefix)
-      log.info("class loader closed")
       log.info("calling plugin.done()")
       plugin.done(this)
       plugins.remove(urlPrefix)
-      
       log.info(s"deleting message queue ${pluginsMessageQueues.get(urlPrefix).toString()}")
       pluginsMessageQueues.remove(urlPrefix)
       for(sessionKey: Object <- pluginsSessionKeys.keySet.stream.sorted.toArray) {
@@ -142,6 +139,8 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
           pluginsSessionKeys.remove(sessionKey)
         }
       }
+      classLoader.close();
+      log.info("class loader closed")
     } else {
       log.info("plugin not founded")
     }
