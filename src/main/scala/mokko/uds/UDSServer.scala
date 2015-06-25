@@ -78,6 +78,43 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
     plugs
   }
   
+  def loadPlugin(urlPrefix: String, config: String): Boolean = {
+    val entryType = config.split(":")(0)
+    val entryVal = config.split(":")(1)
+    var processed = false
+    if(entryType.compareToIgnoreCase("plugin") == 0) {
+      log.info(s"Loading plugin ${urlPrefix} from path ${entryVal}")
+      val pluginPathParts = entryVal.split("/")
+      log.info(s"${pluginPathParts(0)} : ${pluginPathParts(1)}")
+      val url = (new File(pluginsDir, pluginPathParts(0))).toURI.toURL
+      val classLoader = new URLClassLoader(Array(url))
+      pluginsClassLoaders.put(urlPrefix, classLoader)
+      val pluginClass = classLoader.loadClass(pluginPathParts(1))
+      val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
+      plugins.put(urlPrefix, plugin)
+      pluginsMessageQueues.put(urlPrefix, new LinkedBlockingQueue[Message]())
+      val sessionKey = UUID.randomUUID.toString
+      pluginsSessionKeys.put(sessionKey, urlPrefix)
+      sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
+      plugin.init(this, sessionKey)
+      log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
+      processed = true
+    }
+    if(entryType.compareToIgnoreCase("config") == 0) {
+      log.info(s"Loading internal plugin (Config) ${urlPrefix}")
+      val plugin = new mokko.uds.plugins.internal.Config()
+      plugins.put(urlPrefix, plugin)
+      pluginsMessageQueues.put(urlPrefix, new LinkedBlockingQueue[Message]())
+      val sessionKey = UUID.randomUUID.toString
+      pluginsSessionKeys.put(sessionKey, urlPrefix)
+      sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
+      log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
+      plugin.init(this, sessionKey)
+      processed = true
+    }
+    processed
+  }
+
   def unloadPlugin(urlPrefix: String) = {
     log.info(s"unloadPlugin(), prefix=${urlPrefix}")
     val plugin = plugins.get(urlPrefix)
@@ -105,6 +142,13 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
     }
   }
   
+  def reloadPlugin(urlPrefix: String) = {
+    log.info(s"reloading plugin at ${urlPrefix}")
+    unloadPlugin(urlPrefix)
+    System.gc()
+    loadPlugin(urlPrefix, pluginsConfigs.get(urlPrefix))
+  }
+  
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
   StatusPrinter.print(lc);
   
@@ -120,6 +164,7 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   val pluginsDir = new File(conf.getString("uds-server.pluginsPath"))
   
   val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap[String, IServerPlugin]()
+  val pluginsConfigs: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
   val pluginsClassLoaders: ConcurrentHashMap[String, ClassLoader] = new ConcurrentHashMap[String, ClassLoader]()
   val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Message]] = new ConcurrentHashMap()
   val pluginsSessionKeys: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
@@ -129,41 +174,10 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   val treeConf = conf.getObject("uds-server.tree")
   for(key: Object <- treeConf.keySet.stream.sorted.toArray) {
     val value = conf.getString(s"uds-server.tree.${key}")
-    val entryType = value.split(":")(0)
-    val entryVal = value.split(":")(1)
-    var processed = false
-    if(entryType.compareToIgnoreCase("plugin") == 0) {
-      log.info(s"Loading plugin ${key} from path ${entryVal}")
-      val pluginPathParts = entryVal.split("/")
-      log.info(s"${pluginPathParts(0)} : ${pluginPathParts(1)}")
-      val url = (new File(pluginsDir, pluginPathParts(0))).toURI.toURL
-      val classLoader = new URLClassLoader(Array(url))
-      pluginsClassLoaders.put(key.asInstanceOf[String], classLoader)
-      val pluginClass = classLoader.loadClass(pluginPathParts(1))
-      val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
-      plugins.put(key.asInstanceOf[String], plugin)
-      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Message]())
-      val sessionKey = UUID.randomUUID.toString
-      pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
-      sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
-      plugin.init(this, sessionKey)
-      log.info(s"Loaded plugin ${plugin.getName()} - ${plugin.getDescription()}")
-      processed = true
-    }
-    if(entryType.compareToIgnoreCase("config") == 0) {
-      log.info(s"Loading internal plugin (Config) ${key}")
-      val plugin = new mokko.uds.plugins.internal.Config()
-      plugins.put(key.asInstanceOf[String], plugin)
-      pluginsMessageQueues.put(key.asInstanceOf[String], new LinkedBlockingQueue[Message]())
-      val sessionKey = UUID.randomUUID.toString
-      pluginsSessionKeys.put(sessionKey, key.asInstanceOf[String])
-      sessions.put(sessionKey, new ConcurrentHashMap[String, Object])
-      log.info(s"Loaded internal plugin (Config) ${plugin.getName()} - ${plugin.getDescription()}")
-      plugin.init(this, sessionKey)
-      processed = true
-    }
-    if(!processed) {
+    if(!loadPlugin(key.asInstanceOf[String], value)) {
       log.error("Error processing tree entry " + key.asInstanceOf[String] + " ; skipped!")
+    } else {
+      pluginsConfigs.put(key.asInstanceOf[String], value)
     }
   }
     
