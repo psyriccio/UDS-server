@@ -79,6 +79,7 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   }
   
   def loadPlugin(urlPrefix: String, config: String): Boolean = {
+    log.info(s"loadPlugin(), urlPrefix=${urlPrefix}, config=${config}")
     val entryType = config.split(":")(0)
     val entryVal = config.split(":")(1)
     var processed = false
@@ -92,6 +93,7 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
       val pluginClass = classLoader.loadClass(pluginPathParts(1))
       val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
       plugins.put(urlPrefix, plugin)
+      pluginsConfigs.put(urlPrefix, config)
       pluginsMessageQueues.put(urlPrefix, new LinkedBlockingQueue[Message]())
       val sessionKey = UUID.randomUUID.toString
       pluginsSessionKeys.put(sessionKey, urlPrefix)
