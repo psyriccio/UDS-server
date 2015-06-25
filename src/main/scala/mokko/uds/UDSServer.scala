@@ -79,19 +79,29 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   }
   
   def unloadPlugin(urlPrefix: String) = {
+    log.info(s"unloadPlugin(), prefix=${urlPrefix}")
     val plugin = plugins.get(urlPrefix)
     if(plugin != null) {
+      log.info(s"plugin finded: ${plugin.getName()} - ${plugin.getDescription}")
       val classLoader = pluginsClassLoaders.get(urlPrefix).asInstanceOf[URLClassLoader]
+      log.info(s"${classLoader.toString()} ${classLoader.getURLs.mkString}")
       classLoader.close();
       pluginsClassLoaders.remove(urlPrefix)
+      log.info("class loader closed")
+      log.info("calling plugin.done()")
       plugin.done(this)
       plugins.remove(urlPrefix)
+      
+      log.info(s"deleting message queue ${pluginsMessageQueues.get(urlPrefix).toString()}")
       pluginsMessageQueues.remove(urlPrefix)
       for(sessionKey: Object <- pluginsSessionKeys.keySet.stream.sorted.toArray) {
         if(pluginsSessionKeys.get(sessionKey).equals(urlPrefix)) {
+          log.info(s"deleting session key = ${sessionKey}")
           pluginsSessionKeys.remove(sessionKey)
         }
       }
+    } else {
+      log.info("plugin not founded")
     }
   }
   
