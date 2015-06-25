@@ -145,10 +145,12 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   }
   
   def reloadPlugin(urlPrefix: String) = {
+    val urlCopy: Array[Byte] = urlPrefix.getBytes("UTF-8")
     log.info(s"reloading plugin at ${urlPrefix}")
     unloadPlugin(urlPrefix)
     System.gc()
-    loadPlugin(urlPrefix, pluginsConfigs.get(urlPrefix))
+    val urlPrefixCopy = new String(urlCopy, "UTF-8")
+    loadPlugin(urlPrefixCopy, pluginsConfigs.get(urlPrefixCopy))
   }
   
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
