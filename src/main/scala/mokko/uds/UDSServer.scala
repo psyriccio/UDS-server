@@ -150,10 +150,14 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
     val urlCopy = new Array[Byte](urlData.length)
     Array.copy(urlData, 0, urlCopy, 0, urlCopy.length)
     val urlPrefixCopy = new String(urlCopy, "UTF-8")
+    val configData = pluginsConfigs.get(urlPrefixCopy).getBytes("UTF-8").clone()
+    val configDataCopy = new Array[Byte](configData.length)
+    Array.copy(configData, 0, configDataCopy, 0, configDataCopy.length)
+    val configCopy = new String(configDataCopy, "UTF-8")
     log.info(s"copied urlPrefix=${urlPrefixCopy}")
     log.info(s"reloading plugin at ${urlPrefix}")
     unloadPlugin(urlPrefix)
-    loadPlugin(urlPrefixCopy, pluginsConfigs.get(urlPrefixCopy))
+    loadPlugin(urlPrefixCopy, configCopy)
   }
   
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
