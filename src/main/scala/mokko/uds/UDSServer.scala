@@ -14,6 +14,7 @@ import com.typesafe.config.ConfigFactory
 import java.io.File
 import java.net.URLClassLoader
 import java.util.ArrayList
+import java.util.Arrays
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -145,7 +146,9 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   }
   
   def reloadPlugin(urlPrefix: String) = {
-    val urlCopy: Array[Byte] = urlPrefix.getBytes("UTF-8").clone()
+    val urlData: Array[Byte] = urlPrefix.getBytes("UTF-8").clone()
+    val urlCopy = new Array[Byte](urlData.length)
+    Array.copy(urlData, 0, urlCopy, 0, urlCopy.length)
     log.info(s"reloading plugin at ${urlPrefix}")
     unloadPlugin(urlPrefix)
     val urlPrefixCopy = new String(urlCopy, "UTF-8")
