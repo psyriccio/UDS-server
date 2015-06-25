@@ -93,6 +93,7 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
   val pluginsDir = new File(conf.getString("uds-server.pluginsPath"))
   
   val plugins: ConcurrentHashMap[String, IServerPlugin] = new ConcurrentHashMap[String, IServerPlugin]()
+  val pluginsClassLoaders: ConcurrentHashMap[String, ClassLoader] = new ConcurrentHashMap[String, ClassLoader]()
   val pluginsMessageQueues: ConcurrentHashMap[String, LinkedBlockingQueue[Message]] = new ConcurrentHashMap()
   val pluginsSessionKeys: ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]()
   val sessions: ConcurrentHashMap[String, ConcurrentHashMap[String, Object]] = new ConcurrentHashMap[String, ConcurrentHashMap[String, Object]]
@@ -110,6 +111,7 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
       log.info(s"${pluginPathParts(0)} : ${pluginPathParts(1)}")
       val url = (new File(pluginsDir, pluginPathParts(0))).toURI.toURL
       val classLoader = new URLClassLoader(Array(url))
+      pluginsClassLoaders.put(key.asInstanceOf[String], classLoader)
       val pluginClass = classLoader.loadClass(pluginPathParts(1))
       val plugin: IServerPlugin = pluginClass.newInstance().asInstanceOf[IServerPlugin]
       plugins.put(key.asInstanceOf[String], plugin)
