@@ -78,6 +78,23 @@ object UDSServer extends App with IServer with IServerManager with OSMXBeanImpl 
     plugs
   }
   
+  def unloadPlugin(urlPrefix: String) = {
+    val plugin = plugins.get(urlPrefix)
+    if(plugin != null) {
+      val classLoader = pluginsClassLoaders.get(urlPrefix).asInstanceOf[URLClassLoader]
+      classLoader.close();
+      pluginsClassLoaders.remove(urlPrefix)
+      plugin.done(this)
+      plugins.remove(urlPrefix)
+      pluginsMessageQueues.remove(urlPrefix)
+      for(sessionKey: Object <- pluginsSessionKeys.keySet.stream.sorted.toArray) {
+        if(pluginsSessionKeys.get(sessionKey).equals(urlPrefix)) {
+          pluginsSessionKeys.remove(sessionKey)
+        }
+      }
+    }
+  }
+  
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
   StatusPrinter.print(lc);
   
