@@ -14,7 +14,6 @@ import com.typesafe.config.ConfigFactory
 import java.io.File
 import java.net.URLClassLoader
 import java.util.ArrayList
-import java.util.Arrays
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
